@@ -122,6 +122,7 @@ async function processRoutes() {
 // write results from the Google Maps API to our DynamoDB table for later analysis
 async function writeResults(results) {
     let ddb = new AWS.DynamoDB({apiVersion: '2012-08-10'}),
+        timestamp = Math.round(+new Date() / 1000).toString(),
         now = DateTime.local().setZone('UTC-4'),
         dateFormat = now.toFormat('yyyy/MM/dd'),
         meridiem = now.toFormat('a').toLowerCase(),
@@ -141,7 +142,7 @@ async function writeResults(results) {
                         'commute': { 'S': (meridiem === 'AM') ? 'home->work' : 'work->home' },
                         'date': { 'S': dateFormat },
                         // convert to seconds
-                        'timestamp': { 'N': Math.round(+new Date() / 1000).toString() }
+                        'timestamp': { 'N': timestamp }
                 },
             },
         };
@@ -161,15 +162,22 @@ async function writeResults(results) {
     });
 }
 
-// kick everything off
-(async function main() {
-    let results = await processRoutes();
+if (isLambda) {
+    exports.handler = async () => {
+        let results = await processRoutes();
+        writeResults(results);
+    };
+} else {
+    // kick everything off
+    (async function main() {
+        let results = await processRoutes();
 
-    !isLambda && console.log('Got result times,');
-    !isLambda && console.log(results);
-    !isLambda && console.log('Recording to database...');
+        console.log('Got result times,');
+        console.log(results);
+        console.log('Recording to database...');
 
-    writeResults(results);
+        writeResults(results);
 
-    !isLambda && console.log('Complete.');
-}());
+        console.log('Complete.');
+    }());
+}
