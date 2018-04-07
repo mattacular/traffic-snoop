@@ -5,9 +5,11 @@ an AWS Lambda functions on cron (eg. to measure what the traffic is like at spec
 For example, this script can be used to analyze commutes during rush hour between multiple locations.
 
 ## how to use
-1. get Google Maps API key
-2. create dynamo DB
-3. create a list of home and work addresses that you would like to analyze traffic between.
+Pre-requisites:
+
+1. Google Maps API key
+2. AWS DynamoDB table
+3. List of home and work addresses that you would like to analyze traffic between.
 
 Create `./config.json` and fill in the following data:
 
@@ -40,18 +42,22 @@ Now you can run the script!
 
 `$ node traffic.js`
 
-The results for each run-through will accumulate in the DynamoDB table that you specified in the following format:
+You may also use a remote `config.json` by specifying a URL via `REMOTE_CONFIG` env var:
+
+`$ REMOTE_CONFIG="http://your.web.host/config.json" node traffic.js`
+
+The results for each run-through will accumulate into the specified DynamoDB table in the following format:
 
 ```json
 {
 	"uuid": "uuidv1",
 	"origin": "origin address",
 	"destination": "destination address",
-	"travelTime": "10 minutes"
+	"travelTime": "10 minutes",
 	"commute": "home -> work",
 	"date": "YYYY/MM/DD",
 	"day": "Wed",
 	"time": 3:04 PM",
-	"timestamp": "unix epoch in seconds",
+	"timestamp": "unix epoch in seconds"
 }
 ```
