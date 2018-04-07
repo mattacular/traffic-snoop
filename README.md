@@ -44,12 +44,12 @@ The results for each run will accumulate in the DynamoDB table that you specifie
 
 ```json
 {
-	uuid: 'uuidv1',
-	date: 'YYYY/MM/DD',
-	destination: "destination address',
-	origin: "origin address",
-	commute: "eg. home->work",
-	timestamp: "unix epoch in seconds",
-	travelTime: "10 minutes"
+	"uuid": "uuidv1",
+	"date": "YYYY/MM/DD",
+	"destination": "destination address",
+	"origin": "origin address",
+	"commute": "eg. home->work",
+	"timestamp": "unix epoch in seconds",
+	"travelTime": "10 minutes"
 }
 ```
