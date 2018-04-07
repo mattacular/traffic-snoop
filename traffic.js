@@ -13,32 +13,23 @@
  *  (home locations * work locations) to ~15-20 in order ensure the entire job can
  *  complete in the allotted time.
  */
-// libraries
 const { DateTime } = require('luxon');
 const uuidv1 = require('uuid/v1');
 const axios = require('axios');
 const AWS = require('aws-sdk');
 const isLambda = require('is-lambda');
 const fs = require('fs');
-
-// read in our config
-const config = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
-const GOOGLE_API_KEY = config.google.key;
-const AWS_DYNAMO_DB_TABLE = config.aws.table;
-const locations = config.locations;
 const GOOGLE_API_ENDPOINT = 'https://maps.googleapis.com/maps/api/distancematrix/json';
 
-if (!isLambda) {
-    console.log('Detected local environment. Loading AWS config...');
-    AWS.config.loadFromPath('./auth.json');
-}
+var config;
+var results;
 
 // helper that returns a fully-formed Google Maps API request URL
 function getDistanceRequest(origin, destination) {
     let params = {
         units: 'imperial',
         mode: 'driving',
-        key: GOOGLE_API_KEY,
+        key: config.google.key,
         language: 'en-EN'
     };
 
@@ -59,12 +50,12 @@ function getDistanceRequest(origin, destination) {
 }
 
 // make HTTP request(s) to the Google API and gather results object
-async function processRoutes() {
-    let originKey, apiRequest, direction, queue = [];
+async function getResults() {
+    let queue = [], originKey, apiRequest, direction;
 
     // validate the provided configuration
-    if (!locations.work.length ||
-        !locations.home.length) {
+    if (!config.locations.work.length ||
+        !config.locations.home.length) {
 
         throw new Error(
             'Could not find location pair to measure.',
@@ -72,7 +63,7 @@ async function processRoutes() {
         );
     }
 
-    if (locations.work.length * locations.home.length > 20) {
+    if (config.locations.work.length * config.locations.home.length > 20) {
         throw new Error(
             'Exceeded permutations limit.',
             'Please reduce the number of locations.'
@@ -91,8 +82,8 @@ async function processRoutes() {
 
     // gather the request URLs for each commute scenario
     // #(locations.work.length * locations.home.length)
-    locations.work.forEach((workAddress) => {
-        locations.home.forEach((homeAddress) => {
+    config.locations.work.forEach((workAddress) => {
+        config.locations.home.forEach((homeAddress) => {
             apiRequest = (originKey === 'home') ? getDistanceRequest(homeAddress, workAddress)
                                                 : getDistanceRequest(workAddress, homeAddress);
             queue.push(axios.get(apiRequest));
@@ -150,7 +141,7 @@ async function writeResults(results) {
 
     ddb.batchWriteItem({
         'RequestItems': {
-            [AWS_DYNAMO_DB_TABLE]: requestItems
+            [config.aws.table]: requestItems
         },
     }, (err, data) => {
 
@@ -162,15 +153,40 @@ async function writeResults(results) {
     });
 }
 
+// read in our config
+async function getConfig() {
+    let config, remoteRequest;
+
+    if (process.env.REMOTE_CONFIG) {
+        remoteRequest = await axios.get(process.env.REMOTE_CONFIG);
+
+        if (remoteRequest.status === 200) {
+            config = remoteRequest.data;
+        } else {
+            throw new Error('Could not retrieve remote config.json.');
+        }
+    } else {
+        config = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
+    }
+
+    return config;
+}
+
+// detect whether we are running in an AWS Lambda environment
 if (isLambda) {
     exports.handler = async () => {
-        let results = await processRoutes();
+        config = await getConfig();
+        results = await getResults();
         writeResults(results);
     };
 } else {
-    // kick everything off
+    // load credentials for local execution (lambda function is authorized via attached role)
+    AWS.config.loadFromPath('./auth.json');
+
+    // kick everything off with extra logging
     (async function main() {
-        let results = await processRoutes();
+        config = await getConfig();
+        results = await getResults();
 
         console.log('Got result times,');
         console.log(results);
