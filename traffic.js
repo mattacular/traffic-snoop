@@ -116,7 +116,10 @@ async function writeResults(results) {
         timestamp = Math.round(+new Date() / 1000).toString(),
         now = DateTime.local().setZone('UTC-4'),
         dateFormat = now.toFormat('yyyy/MM/dd'),
+        dayFormat = now.toFormat('ccc'),
+        timeFormat = now.toFormat('t'),
         meridiem = now.toFormat('a').toLowerCase(),
+        commuteLabel = (meridiem === 'am') ? 'home -> work' : 'work -> home',
         requestItems,
         i = 0;
 
@@ -130,9 +133,11 @@ async function writeResults(results) {
                         'origin': { 'S': result.origin },
                         'destination': { 'S': result.destination },
                         'travelTime': { 'S': result.travelTime },
-                        'commute': { 'S': (meridiem === 'AM') ? 'home->work' : 'work->home' },
+                        'commute': { 'S': commuteLabel },
                         'date': { 'S': dateFormat },
-                        // convert to seconds
+                        'day': { 'S': dayFormat },
+                        'time': { 'S': timeFormat },
+                        // convert ms -> s
                         'timestamp': { 'N': timestamp }
                 },
             },

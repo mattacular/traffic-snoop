@@ -40,16 +40,18 @@ Now you can run the script!
 
 `$ node traffic.js`
 
-The results for each run will accumulate in the DynamoDB table that you specified in the following format:
+The results for each run-through will accumulate in the DynamoDB table that you specified in the following format:
 
 ```json
 {
 	"uuid": "uuidv1",
-	"date": "YYYY/MM/DD",
-	"destination": "destination address",
 	"origin": "origin address",
-	"commute": "eg. home->work",
-	"timestamp": "unix epoch in seconds",
+	"destination": "destination address",
 	"travelTime": "10 minutes"
+	"commute": "home -> work",
+	"date": "YYYY/MM/DD",
+	"day": "Wed",
+	"time": 3:04 PM",
+	"timestamp": "unix epoch in seconds",
 }
 ```
