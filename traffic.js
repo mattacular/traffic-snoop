@@ -31,8 +31,6 @@ const GOOGLE_API_ENDPOINT = 'https://maps.googleapis.com/maps/api/distancematrix
 if (!isLambda) {
     console.log('Detected local environment. Loading AWS config...');
     AWS.config.loadFromPath('./auth.json');
-} else {
-    console.log('Detected AWS Lambda environment.');
 }
 
 // helper that returns a fully-formed Google Maps API request URL
@@ -156,9 +154,9 @@ async function writeResults(results) {
     }, (err, data) => {
 
         if (err) {
-            console.log('Batch write error:', err);
+            console.error('Batch write error:', err);
         } else {
-            console.log('Batch write was successful.');
+            !isLambda && console.log('Batch write was successful.');
         }
     });
 }
@@ -167,11 +165,11 @@ async function writeResults(results) {
 (async function main() {
     let results = await processRoutes();
 
-    console.log('Got result times,');
-    console.log(results);
-    console.log('Recording to database...');
+    !isLambda && console.log('Got result times,');
+    !isLambda && console.log(results);
+    !isLambda && console.log('Recording to database...');
 
     writeResults(results);
 
-    console.log('Complete.');
+    !isLambda && console.log('Complete.');
 }());
