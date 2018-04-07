@@ -32,9 +32,9 @@ Create `./auth.json` with your AWS credentials needed to access the DynamoDB ins
 
 ```json
 {
-	"accessKeyId": "",
-	"secretAccessKey": "",
-	"region": ""
+	"accessKeyId": "<your access key>",
+	"secretAccessKey": "<your secret key>",
+	"region": "us-east-1"
 }
 ```
 
@@ -57,7 +57,7 @@ The results for each run-through will accumulate into the specified DynamoDB tab
 	"commute": "home -> work",
 	"date": "YYYY/MM/DD",
 	"day": "Wed",
-	"time": 3:04 PM",
+	"time": "3:04 PM",
 	"timestamp": "unix epoch in seconds"
 }
 ```
