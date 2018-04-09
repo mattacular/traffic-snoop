@@ -30,7 +30,8 @@ function getDistanceRequest(origin, destination) {
         units: 'imperial',
         mode: 'driving',
         key: config.google.key,
-        language: 'en-EN'
+        language: 'en-EN',
+        departure_time: 'now'
     };
 
     params.origins = origin.replace(/\s/g, '+');
